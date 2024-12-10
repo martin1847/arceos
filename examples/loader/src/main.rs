@@ -21,23 +21,31 @@ const HEAD_SIZE: usize = size_of::<PartHeader>();
 
 #[cfg_attr(feature = "axstd", no_mangle)]
 fn main() {
-    let apps_start = PLASH_START as *const u8;
     // let apps_size = 32; // Dangerous!!! We need to get accurate size of apps.
 
-    println!("Load payload ...");
+    let mut apps_start = PLASH_START;
+    let mut app_num = 0;
+    loop {
+        let part: &_ = unsafe { &*(apps_start as *const PartHeader) };
+        if part.magic != SALUTE_MAGIC {
+            break;
+        }
+        app_num += 1;
+        println!("Load payload app {}...", app_num);
 
-    // let part_ptr: *const PartHeader = ;
+        // let part_ptr: *const PartHeader = ;
 
-    let part: &_ = unsafe { &*(apps_start as *const PartHeader) };
-    assert_eq!(part.magic, SALUTE_MAGIC);
-    // println!("field1: {:X} , magic {:X}", part.magic, SALUTE_MAGIC); // Output: 78563412 (little-endian)
-    let apps_size = u32::from_be_bytes(part.length_be) as usize;
+        // println!("field1: {:X} , magic {:X}", part.magic, SALUTE_MAGIC); // Output: 78563412 (little-endian)
+        let apps_size = u32::from_be_bytes(part.length_be) as usize;
 
-    // println!("field2: {:?} -> len  {}", part.length_be, apps_size);
+        // println!("field2: {:?} -> len  {}", part.length_be, apps_size);
 
-    let code =
-        unsafe { core::slice::from_raw_parts((PLASH_START + HEAD_SIZE) as *const u8, apps_size) };
-    println!("content: {:?}: ", code);
+        let code = unsafe {
+            core::slice::from_raw_parts((apps_start + HEAD_SIZE) as *const u8, apps_size)
+        };
+        apps_start += HEAD_SIZE + apps_size;
+        println!("content: {:?}: ", code);
 
-    println!("Load payload ok!");
+        println!("Load payload {} ok!\n", app_num);
+    }
 }
