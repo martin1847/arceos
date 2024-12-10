@@ -852,6 +852,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "hello_app"
+version = "0.1.0"
+
+[[package]]
 name = "iana-time-zone"
 version = "0.1.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1000,6 +1004,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.70",
+]
+
+[[package]]
+name = "loader"
+version = "0.1.0"
+dependencies = [
+ "axstd",
 ]
 
 [[package]]
