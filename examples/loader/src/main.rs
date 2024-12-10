@@ -59,14 +59,96 @@ fn main() {
 
         println!("Execute app {}  ...", app_num);
 
+        register_abi(SYS_HELLO, abi_hello as usize);
+        register_abi(SYS_PUTCHAR, abi_putchar as usize);
+        register_abi(SYS_TERMINATE, shutdown as usize);
+
+        println!("Execute app ...");
+        let arg0: u8 = b'A';
+
         // execute app
         unsafe {
             core::arch::asm!("
-            li      t2, {run_start}
-            jalr    t2
-            j       .",
+        li      t0, {abi_num}
+        slli    t0, t0, 3
+        la      t1, {abi_table}
+        add     t1, t1, t0
+        ld      t1, (t1)
+        jalr    t1
+        li      t2, {run_start}
+        jalr    t2
+        j       .",
                 run_start = const RUN_START,
+                abi_table = sym ABI_TABLE,
+                //abi_num = const SYS_HELLO,
+                abi_num = const SYS_TERMINATE,
+                in("a0") arg0,
             )
         }
     }
+}
+
+const SYS_HELLO: usize = 1;
+const SYS_PUTCHAR: usize = 2;
+const SYS_TERMINATE: usize = 3;
+
+static mut ABI_TABLE: [usize; 16] = [0; 16];
+
+fn register_abi(num: usize, handle: usize) {
+    unsafe {
+        ABI_TABLE[num] = handle;
+    }
+}
+
+fn abi_hello() {
+    println!("[ABI:Hello] Hello, Apps!");
+}
+
+fn abi_putchar(c: char) {
+    println!("[ABI:Print] {c}");
+}
+
+const SBI_SET_TIMER: usize = 0x54494D45;
+const SBI_CONSOLE_PUTCHAR: usize = 1;
+const SBI_CONSOLE_GETCHAR: usize = 2;
+// const SBI_SHUTDOWN: usize = 8;
+// const SBI_SHUTDOWN: usize = 8;
+const SBI_SHUTDOWN: usize = 0x53525354;
+
+/// general sbi call
+#[inline(always)]
+fn sbi_call(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
+    let mut ret;
+    unsafe {
+        core::arch::asm!(
+            "ecall",
+            inlateout("x10") arg0 => ret,
+            in("x11") arg1,
+            in("x12") arg2,
+            in("x16") 0,
+            in("x17") which,
+        );
+    }
+    ret
+}
+
+/// use sbi call to set timer
+// pub fn set_timer(timer: usize) {
+//     sbi_call(SBI_SET_TIMER, timer, 0, 0);
+// }
+
+// /// use sbi call to putchar in console (qemu uart handler)
+// pub fn console_putchar(c: usize) {
+//     sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
+// }
+
+// /// use sbi call to getchar from console (qemu uart handler)
+// pub fn console_getchar() -> usize {
+//     sbi_call(SBI_CONSOLE_GETCHAR, 0, 0, 0)
+// }
+
+/// use sbi call to shutdown the kernel
+fn shutdown() -> ! {
+    sbi_call(SBI_SHUTDOWN, 0, 0, 0);
+    panic!("It should shutdown!");
 }
