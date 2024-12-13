@@ -52,6 +52,7 @@ fn main() {
         println!("content: {:?}: ", code);
 
         let run_code = unsafe { core::slice::from_raw_parts_mut(RUN_START as *mut u8, app_size) };
+        // run_code.copy_from_slice(&code[0..8]);
         run_code.copy_from_slice(code);
         println!("run code {:?}; address [{:?}]", run_code, run_code.as_ptr());
 
@@ -59,32 +60,54 @@ fn main() {
 
         println!("Execute app {}  ...", app_num);
 
-        register_abi(SYS_HELLO, abi_hello as usize);
-        register_abi(SYS_PUTCHAR, abi_putchar as usize);
-        register_abi(SYS_TERMINATE, shutdown as usize);
-
-        println!("Execute app ...");
-        let arg0: u8 = b'A';
-
         // execute app
         unsafe {
             core::arch::asm!("
-        li      t0, {abi_num}
-        slli    t0, t0, 3
-        la      t1, {abi_table}
-        add     t1, t1, t0
-        ld      t1, (t1)
-        jalr    t1
-        li      t2, {run_start}
-        jalr    t2
-        j       .",
-                run_start = const RUN_START,
-                abi_table = sym ABI_TABLE,
-                //abi_num = const SYS_HELLO,
-                abi_num = const SYS_TERMINATE,
-                in("a0") arg0,
-            )
+                li      t2, {run_start}
+                jalr    ra,t2
+                ",
+            // jalr 绝对跳转，并且设置ra返回地址，支持两个调用
+                    // j       .",//死循环在这里
+                                run_start = const RUN_START,
+                            )
         }
+        // register_abi(SYS_HELLO, abi_hello as usize);
+        // register_abi(SYS_PUTCHAR, abi_putchar as usize);
+        // register_abi(SYS_TERMINATE, shutdown as usize);
+
+        // // println!("Execute app ...");
+        // let arg0: u8 = b'A';
+
+        // execute app
+        // execute app
+        //     unsafe {
+        //         core::arch::asm!("
+        // la      a7, {abi_table}
+        // li      t2, {run_start}
+        // jalr    t2
+        // j       .",
+        //             run_start = const RUN_START,
+        //             abi_table = sym ABI_TABLE,
+        //         )
+        //     }
+        // unsafe {
+        //     core::arch::asm!("
+        // li      t0, {abi_num}
+        // slli    t0, t0, 3
+        // la      t1, {abi_table}
+        // add     t1, t1, t0
+        // ld      t1, (t1)
+        // jalr    t1
+        // li      t2, {run_start}
+        // jalr    t2
+        // j       .",
+        //         run_start = const RUN_START,
+        //         abi_table = sym ABI_TABLE,
+        //         //abi_num = const SYS_HELLO,
+        //         abi_num = const SYS_TERMINATE,
+        //         in("a0") arg0,
+        //     )
+        // }
     }
 }
 
