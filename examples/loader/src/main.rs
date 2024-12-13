@@ -4,6 +4,7 @@
 
 use core::mem::size_of;
 
+use axstd::os::arceos::modules::axlog::warn;
 #[cfg(feature = "axstd")]
 use axstd::println;
 
@@ -58,23 +59,34 @@ fn main() {
 
         println!("Load payload {} ok!\n", app_num);
 
+        // shutdown();
         println!("Execute app {}  ...", app_num);
 
         // execute app
+        // unsafe {
+        //     core::arch::asm!("
+        //         li      t2, {run_start}
+        //         jalr    ra,t2
+        //         ",
+        //     // jalr 绝对跳转，并且设置ra返回地址，支持两个调用
+        //             // j       .",//死循环在这里
+        //                         run_start = const RUN_START,
+        //                     )
+        // }
+        register_abi(SYS_HELLO, abi_hello as usize);
+        register_abi(SYS_PUTCHAR, abi_putchar as usize);
+        register_abi(SYS_TERMINATE, shutdown as usize);
+
         unsafe {
             core::arch::asm!("
+                la      a7, {abi_table}
                 li      t2, {run_start}
-                jalr    ra,t2
-                ",
-            // jalr 绝对跳转，并且设置ra返回地址，支持两个调用
-                    // j       .",//死循环在这里
-                                run_start = const RUN_START,
-                            )
+                jalr    t2
+                j       .",
+                run_start = const RUN_START,
+                abi_table = sym ABI_TABLE,
+            )
         }
-        // register_abi(SYS_HELLO, abi_hello as usize);
-        // register_abi(SYS_PUTCHAR, abi_putchar as usize);
-        // register_abi(SYS_TERMINATE, shutdown as usize);
-
         // // println!("Execute app ...");
         // let arg0: u8 = b'A';
 
@@ -122,13 +134,19 @@ fn register_abi(num: usize, handle: usize) {
         ABI_TABLE[num] = handle;
     }
 }
-
+#[no_mangle]
 fn abi_hello() {
     println!("[ABI:Hello] Hello, Apps!");
+    // let _ = 9 + 9;
 }
 
-fn abi_putchar(c: char) {
+#[no_mangle]
+fn abi_putchar(arg0: usize) {
+    let c = arg0 as u8 as char;
     println!("[ABI:Print] {c}");
+    // println!("[ABI:Print2] {c}");
+    // let _ = 9 + 9;
+    // warn!("abi_putchar 123");
 }
 
 const SBI_SET_TIMER: usize = 0x54494D45;

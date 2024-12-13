@@ -1,0 +1,13 @@
+[package]
+name = "hello_app"
+edition = "2021"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]

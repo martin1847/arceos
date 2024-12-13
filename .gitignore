@@ -8,4 +8,3 @@
 *.bin
 qemu.log
 rusty-tags.vi
-/payload
