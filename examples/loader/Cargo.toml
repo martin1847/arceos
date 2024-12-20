@@ -10,5 +10,32 @@ repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[features]
+use-ramfs = [
+    "axstd/myfs",
+    "dep:axfs_vfs",
+    "dep:axfs_ramfs",
+    "dep:crate_interface",
+]
+default = []
+
 [dependencies]
-axstd = { workspace = true, optional = true }
+axstd = { workspace = true, optional = true, features = [
+    "alloc",
+    "paging",
+    "multitask",
+    # "sched_cfs",
+    "fs",
+] }
+kernel-elf-parser = "0.1.0"
+axmm = { workspace = true }
+axhal = { workspace = true }
+axsync = { workspace = true }
+axtask = { workspace = true }
+axlog = { workspace = true }
+# elf = { version = "0.7.4", default-features = false }
+elf = { workspace = true }
+axfs_vfs = { version = "0.1", optional = true }
+axfs_ramfs = { version = "0.1", optional = true }
+crate_interface = { version = "0.1", optional = true }
+arceos_posix_api = { workspace = true }

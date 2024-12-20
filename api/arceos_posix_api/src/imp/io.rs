@@ -34,6 +34,10 @@ pub fn sys_read(fd: c_int, buf: *mut c_void, count: usize) -> ctypes::ssize_t {
 ///
 /// Return the written size if success.
 pub fn sys_write(fd: c_int, buf: *const c_void, count: usize) -> ctypes::ssize_t {
+    warn!("Test SYS_CALL/sys_write Martin!!! Hello!!");
+    // #[cfg(not(feature = "fd"))]
+    // super::stdio::stdout().write(b"Test SYS_CALL Martin!!");
+
     debug!("sys_write <= {} {:#x} {}", fd, buf as usize, count);
     syscall_body!(sys_write, {
         if buf.is_null() {
